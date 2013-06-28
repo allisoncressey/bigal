@@ -17,19 +17,6 @@ var contentManager = (function(){
 		photo_url:"http://api.tumblr.com/v2/blog/allisoncressey.tumblr.com/posts/photo?api_key=XIq5UoFqBpGJP0J8hCwir86DdUSykPXflUNWpTmCBAuKuFIp6N&callback=",
 		video_url:"http://api.tumblr.com/v2/blog/allisoncressey.tumblr.com/posts/video?api_key=XIq5UoFqBpGJP0J8hCwir86DdUSykPXflUNWpTmCBAuKuFIp6N&callback="
 	},
-	ajaxFunction = function(){
-		var xmlhttp; 
-        try { xmlhttp = new XMLHttpRequest();}
-        catch (e) {
-            try { xmlhttp = new ActiveXObject("Msxml2.XMLHTTP"); }
-            catch (e) {
-                try { xmlhttp = new ActiveXObject("Microsoft.XMLHTTP"); }
-                catch (e) { console.log('no ajax?'); return false; }
-            }
-        }
-        return xmlhttp;
-	},
-
 	
 	getFlickr = function(){
 		var this_url = "http://api.flickr.com/services/rest/?method=flickr.photosets.getPhotos&api_key="+flickr.key+"&photoset_id=72157633155822683&format=json"
@@ -91,6 +78,7 @@ var contentManager = (function(){
 		  	},
 	  	});
 	}
+
 
 	getTumblrPhotos(function(){
 		getTumblrVids(function(){
