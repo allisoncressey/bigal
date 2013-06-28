@@ -45,7 +45,7 @@ var contentManager = (function(){
 		  },
 	  });
 	},
-	getTumblrPhotos = function(){
+	getTumblrPhotos = function(cb){
 		$.ajax({
 		    dataType: 'jsonp',
 		    url: tumblr.photo_url,
@@ -53,21 +53,23 @@ var contentManager = (function(){
 		     success: function (data) {
 		    	for (i=0;i<data.response.posts.length;i++){
 
-		    			//var img = document.createElement('img');
-		    			//img.src = data.response.posts[i].photos[0].original_size.url;
-		    			//img.style.height = "200px";
+	    			//var img = document.createElement('img');
+	    			//img.src = data.response.posts[i].photos[0].original_size.url;
+	    			//img.style.height = "200px";
 
-		    			var newHTML = "<img src='"+data.response.posts[i].photos[0].original_size.url+"' />"
+	    			var newHTML = "<img src='"+data.response.posts[i].photos[0].original_size.url+"' />"
 
-		    			contentArrays.tumblrImages.push(newHTML);
-		    		
-		    	
+	    			contentArrays.tumblrImages.push(newHTML);
+
+	    			if (i == data.response.posts.length-1){
+	    				cb();
+	    				return
+	    			}
 		    	};
-
 		  },
 	  });
 	}
-	getTumblrVids = function(){
+	getTumblrVids = function(cb){
 		$.ajax({
 		    dataType: 'jsonp',
 		    url: tumblr.video_url,
@@ -78,22 +80,26 @@ var contentManager = (function(){
 
 		    		contentArrays.tumblrVideos.push(data.response.posts[i].player[0].embed_code);
 
-		    			//var target = document.body
+	    			//var target = document.body
 
-		    			//target.innerHTML += newHTML;
-		    		
-		    	
+	    			//target.innerHTML += newHTML;
+	    			if (i == data.response.posts.length-1){
+	    				cb();
+	    				return
+	    			}
 		    	};
-
-		  },
-	  });
+		  	},
+	  	});
 	}
-	getTumblrPhotos();
-	getTumblrVids();
-	getFlickr();
+
+	getTumblrPhotos(function(){
+		getTumblrVids(function(){
+			getFlickr()
+		})
+	});
 
 	return {
-		processPhotos:function(photoData){
+		processPhotos:function(photoData,cb){
 			console.log(photoData);
 			var body = document.getElementsByTagName('body')[0];
 			for(i=0;i<photoData.photoset.photo.length;i++){
@@ -101,9 +107,14 @@ var contentManager = (function(){
 					server = photoData.photoset.photo[i].server,
 					id = photoData.photoset.photo[i].id,
 					secret = photoData.photoset.photo[i].secret,
-					listitems += '<li><img src="http://farm'+farm+'.staticflickr.com/'+server+'/'+id+'_'+secret+'.jpg" /></li>';
+					listitems = '<img src="http://farm'+farm+'.staticflickr.com/'+server+'/'+id+'_'+secret+'.jpg" />';
 
-				contentManager.flickrImages.push(listitems);
+				contentArrays.flickrImages.push(listitems);
+
+				if (i == photoData.photoset.photo.length-1){
+    				cb();
+    				return
+    			}
 			}
 		}
 	}
@@ -111,5 +122,8 @@ var contentManager = (function(){
 
 	// callback for flickr API
 function jsonFlickrApi(data){
- 	contentManager.processPhotos(data)
+ 	contentManager.processPhotos(data,function(){
+ 		console.log('everything loaded!');
+ 		//console.log(contentArrays.tumblrImages,contentArrays.tumblrVideos,contentArrays.flickrImages);
+ 	})
 }
