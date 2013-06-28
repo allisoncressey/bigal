@@ -6,7 +6,8 @@ var contentArrays = (function(){
 		oneOffResources:[
 		"<!-- EXAMPLE -- put html of individual images, vids, swfs, etc. -->",
 		"<!-- separate each string with a comma. no comma after the last one -->"
-		]
+		],
+		heightOfImages:"330px",
 	}
 })();
 
@@ -48,7 +49,7 @@ var contentManager = (function(){
 	    			//img.src = data.response.posts[i].photos[0].original_size.url;
 	    			//img.style.height = "200px";
 
-	    			var newHTML = "<img src='"+data.response.posts[i].photos[0].original_size.url+"' />"
+	    			var newHTML = "<img src='"+data.response.posts[i].photos[0].original_size.url+"' height='"+contentArrays.heightOfImages+"' />"
 
 	    			contentArrays.tumblrImages.push(newHTML);
 
@@ -99,7 +100,7 @@ var contentManager = (function(){
 					server = photoData.photoset.photo[i].server,
 					id = photoData.photoset.photo[i].id,
 					secret = photoData.photoset.photo[i].secret,
-					listitems = '<img src="http://farm'+farm+'.staticflickr.com/'+server+'/'+id+'_'+secret+'.jpg" />';
+					listitems = '<img src="http://farm'+farm+'.staticflickr.com/'+server+'/'+id+'_'+secret+'.jpg" height="'+contentArrays.heightOfImages+'"/>';
 
 				contentArrays.flickrImages.push(listitems);
 
@@ -120,10 +121,41 @@ function jsonFlickrApi(data){
 
 		console.log(totalArray);
 
-		for (i=0;i<totalArray.length;i++){
-			var safe = totalArray[i];
-			//afe = totalArray[i].replace("<","&lt;").replace(">","&gt;")
-			document.body.innerHTML += safe+"<br />";
+		var contentBlock = '';
+		var count = 0;
+
+		while (totalArray.length > 0){
+
+			var luckyNumber = Math.floor(Math.random() * (totalArray.length - 1));
+
+			var luckySubject = totalArray.splice(luckyNumber,1);
+			console.log(totalArray.length,luckyNumber,luckySubject);
+
+			contentBlock += luckySubject[0];
+			count++;
+
+			if (count % 10 == 0 || totalArray.length == 0){
+				var scrollable = document.createElement('div');
+				scrollable.className = "makeMeScrollable";
+
+				scrollable.innerHTML = contentBlock;
+				var target = document.getElementById("contentArea");
+				console.log(target);
+				target.appendChild(scrollable);
+
+				contentBlock = '';
+				count = 0;	
+			}
+			//document.body.innerHTML += luckySubject+"<br />";
+		}
+
+		if (totalArray.length == 0){
+			$("div.makeMeScrollable").smoothDivScroll({
+				touchScrolling: true,
+				manualContinuousScrolling: true,
+				hotSpotScrolling: false,
+				mousewheelScrolling: false
+			});
 		}
  	})
 }
