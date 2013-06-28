@@ -2,7 +2,11 @@ var contentArrays = (function(){
 	return {
 		flickrImages:[],
 		tumblrImages:[],
-		tumblrVideos:[]
+		tumblrVideos:[],
+		oneOffResources:[
+		"<!-- EXAMPLE -- put html of individual images, vids, swfs, etc. -->",
+		"<!-- separate each string with a comma. no comma after the last one -->"
+		]
 	}
 })();
 
@@ -65,7 +69,7 @@ var contentManager = (function(){
 		     	console.log(data);
 		    	for (i=0;i<data.response.posts.length;i++){
 
-		    		contentArrays.tumblrVideos.push(data.response.posts[i].player[0].embed_code);
+		    		contentArrays.tumblrVideos.push(data.response.posts[i].player[2].embed_code);
 
 	    			//var target = document.body
 
@@ -112,6 +116,14 @@ var contentManager = (function(){
 function jsonFlickrApi(data){
  	contentManager.processPhotos(data,function(){
  		console.log('everything loaded!');
- 		//console.log(contentArrays.tumblrImages,contentArrays.tumblrVideos,contentArrays.flickrImages);
+ 		var totalArray = contentArrays.tumblrImages.concat(contentArrays.flickrImages).concat(contentArrays.tumblrVideos).concat(contentArrays.oneOffResources);
+
+		console.log(totalArray);
+
+		for (i=0;i<totalArray.length;i++){
+			var safe = totalArray[i];
+			//afe = totalArray[i].replace("<","&lt;").replace(">","&gt;")
+			document.body.innerHTML += safe+"<br />";
+		}
  	})
 }
