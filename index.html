@@ -218,34 +218,5 @@ Main needs
 
 <script type="text/javascript" src="contentManager.js"></script>
 
-<script type="text/javascript">
-
-	 var check = setInterval(function(){
-	 	if (contentArrays.flickrImages.length>10){
-	 		//console.log(contentArrays.tumblrImages,contentArrays.tumblrVideos,contentArrays.flickrImages);
-	 		
-			var totalArray = contentArrays.tumblrImages.concat(contentArrays.flickrImages).concat(contentArrays.tumblrVideos);
-
-			
-
-
-			console.log(totalArray);
-
-			for (i=0;i<totalArray.length;i++){
-				var safe = totalArray[i].replace("<","&lt;").replace(">","&gt;")
-				document.body.innerHTML += safe+"<br />";
-			}
-
-
-	 		window.clearInterval(check);
-	 		return
-	 	}
-	 },100);
-
-
-
-
-</script>
-
 </body>
 </html>
