@@ -13,12 +13,12 @@ var contentArrays = (function(){
 
 var contentConfig = (function(){
     return {
-        randomizeTumblr : true,    // true or false
+        randomizeTumblr : false,    // true or false
         randomizeFlickr: false,      // true or false
         numberOfRows: 5,           // number, no quotes
         itemsPerRow : 6,           // number, no quotes
         putFlickrOnLine : 2,        // number, cannot be higher than numberOfRows, or null. randomizedFlickr must be false
-        putTumblrOnLine : null        // number, cannot be higher than numberOfRows, or null. randomizedTumblr must be false
+        putTumblrOnLine : 1        // number, cannot be higher than numberOfRows, or null. randomizedTumblr must be false
     }
 })();
 
@@ -117,13 +117,16 @@ var contentManager = (function(){
             randomizedArray = contentArrays.tumblrImages.concat(contentArrays.tumblrVideos).concat(contentArrays.oneOffResources);
         } else if (contentConfig.randomizeTumblr == false && contentConfig.randomizeFlickr == true){
             randomizedArray = contentArrays.flickrImages
+        } else if (contentConfig.randomizeTumblr == false && contentConfig.randomizeFlickr == false){
+            console.log('randomize nothing?')
+            randomizedArray = [];
         }
 
 
 		
         var lineCount = 0;
 
-		while (randomizedArray.length > 0){
+		while (randomizedArray.length > 0 || contentArrays.flickrImages.length >0 || contentArrays.tumblrImages.length > 0 || contentArrays.tumblrVideos.length > 0){
 
             console.log('line count is '+lineCount);
 
@@ -141,6 +144,9 @@ var contentManager = (function(){
                 // if there are enough lines, quit 
             if (lineCount >= contentConfig.numberOfRows){
                 randomizedArray = [];
+                contentArrays.flickrImages = [];
+                contentArrays.tumblrImages = [];
+                contentArrays.tumblrVideos = [];
             }
 			
 		}
@@ -173,12 +179,13 @@ var contentManager = (function(){
         var count = 0;
 
         while (true){
+        console.log('true loop running');
             // pick a random item from an array
             var luckyNumber = Math.floor(Math.random() * (arrayOfThisType.length - 1));
             var luckySubject = arrayOfThisType.splice(luckyNumber, 1);
 
             // concat that item into a block of content
-            contentBlock += luckySubject[0];
+            luckySubject[0]? contentBlock += luckySubject[0] : contentBlock += "TOO MANY ROWS";
 
             // keep count of how many items are in the block of content
             count++;
