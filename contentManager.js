@@ -13,16 +13,19 @@ var contentArrays = (function(){
 
 var contentConfig = (function(){
     return {
-        randomizeTumblr : false,    // true or false
-        randomizeFlicr: false,      // true or false
-        numberOfRows: 3,           // number, no quotes
-        itemsPerRow : 10,           // number, no quotes
-        putFlickrOnLine : 3,        // number, cannot be higher than numberOfRows
-        putTumblrOnLine : 2,        // number, cannot be higher than numberOfRows
+        randomizeTumblr : true,    // true or false
+        randomizeFlickr: false,      // true or false
+        numberOfRows: 5,           // number, no quotes
+        itemsPerRow : 6,           // number, no quotes
+        putFlickrOnLine : 2,        // number, cannot be higher than numberOfRows, or null. randomizedFlickr must be false
+        putTumblrOnLine : null        // number, cannot be higher than numberOfRows, or null. randomizedTumblr must be false
     }
 })();
 
 var contentManager = (function(){
+
+    contentConfig.putFlickrOnLine--;
+    contentConfig.putTumblrOnLine--;
 
     var rowItems = [];
 	var flickr = {
@@ -92,53 +95,57 @@ var contentManager = (function(){
 	}
     getOneOffItems = function(cb){
         for (var i = 0; i < contentArrays.oneOffResources.length; i++) {
-        var items = contentArrays.oneOffResources;
-        console.log(items[i].source,items[i].putOnLine);
+            var items = contentArrays.oneOffResources;
+            console.log(items[i].source,items[i].putOnLine);
 
-        if (items[1].putOnLine > contentConfig.numberOfRows){
-            console.log("cannot put resource "+i+" on row "+items[i].putOnLine+". numberOfRows is "+contentConfig.numberOfRows);
-        }
-
-
+            if (items[1].putOnLine > contentConfig.numberOfRows){
+                console.log("cannot put resource "+i+" on row "+items[i].putOnLine+". numberOfRows is "+contentConfig.numberOfRows);
+            }
         }
         cb();
     }
 
-    workWithLoadedData = function(){
- 		console.log('everything loaded!');
- 		var totalArray = contentArrays.tumblrImages.concat(contentArrays.flickrImages).concat(contentArrays.tumblrVideos).concat(contentArrays.oneOffResources);
+    workWithLoadedData = function(cb){
+ 		console.log('everything loaded! starting to load resources');
 
-		console.log(totalArray);
+        var randomizedArray;
 
-		var contentBlock = '';
-		var count = 0;
+            // determine which resources to add to randomizedArray
+        if (contentConfig.randomizeTumblr == true && contentConfig.randomizeFlickr == true){
+            randomizedArray = contentArrays.tumblrImages.concat(contentArrays.flickrImages).concat(contentArrays.tumblrVideos).concat(contentArrays.oneOffResources);
+        } else if (contentConfig.randomizeTumblr == true && contentConfig.randomizeFlickr == false){
+            randomizedArray = contentArrays.tumblrImages.concat(contentArrays.tumblrVideos).concat(contentArrays.oneOffResources);
+        } else if (contentConfig.randomizeTumblr == false && contentConfig.randomizeFlickr == true){
+            randomizedArray = contentArrays.flickrImages
+        }
 
-		while (totalArray.length > 0){
 
-			var luckyNumber = Math.floor(Math.random() * (totalArray.length - 1));
+		
+        var lineCount = 0;
 
-			var luckySubject = totalArray.splice(luckyNumber,1);
-			console.log(totalArray.length,luckyNumber,luckySubject);
+		while (randomizedArray.length > 0){
 
-			contentBlock += luckySubject[0];
-			count++;
+            console.log('line count is '+lineCount);
 
-			if (count % 10 == 0 || totalArray.length == 0){
-				var scrollable = document.createElement('div');
-				scrollable.className = "makeMeScrollable";
+            if (lineCount == contentConfig.putFlickrOnLine){
+                returnLineOfCertainItems("Flickr")
+                lineCount++;
+            } else if (lineCount == contentConfig.putTumblrOnLine){
+                returnLineOfCertainItems("Tumblr")
+                lineCount++;
+            } else {
+                returnLineOfCertainItems("Random",randomizedArray)
+                lineCount++;
+            }
 
-				scrollable.innerHTML = contentBlock;
-				var target = document.getElementById("contentArea");
-				console.log(target);
-				target.appendChild(scrollable);
-
-				contentBlock = '';
-				count = 0;	
-			}
-			//document.body.innerHTML += luckySubject+"<br />";
+                // if there are enough lines, quit 
+            if (lineCount >= contentConfig.numberOfRows){
+                randomizedArray = [];
+            }
+			
 		}
 
-		if (totalArray.length == 0){
+		if (randomizedArray.length == 0){
 			$("div.makeMeScrollable").smoothDivScroll({
 				touchScrolling: true,
 				manualContinuousScrolling: true,
@@ -149,6 +156,47 @@ var contentManager = (function(){
 
         cb()
  	}
+
+    returnLineOfCertainItems = function (itemType,randomizedArray) {
+
+        var arrayOfThisType;
+
+        if (itemType == "Flickr") {
+            arrayOfThisType = contentArrays.flickrImages;
+        } else if (itemType == "Tumblr") {
+            arrayOfThisType = contentArrays.tumblrImages.concat(contentArrays.tumblrVideos);
+        } else {
+            arrayOfThisType = randomizedArray;
+        }
+
+        var contentBlock = '';
+        var count = 0;
+
+        while (true){
+            // pick a random item from an array
+            var luckyNumber = Math.floor(Math.random() * (arrayOfThisType.length - 1));
+            var luckySubject = arrayOfThisType.splice(luckyNumber, 1);
+
+            // concat that item into a block of content
+            contentBlock += luckySubject[0];
+
+            // keep count of how many items are in the block of content
+            count++;
+
+            // if the amt of items in the block of content equals the config, poop the block out onto the page and reset the block
+            if (count % contentConfig.itemsPerRow == 0 || arrayOfThisType.length == 0) {
+                var scrollable = document.createElement('div');
+                scrollable.className = "makeMeScrollable";
+
+                scrollable.innerHTML = contentBlock;
+                var target = document.getElementById("contentArea");
+                console.log(target);
+                target.appendChild(scrollable);
+
+                return;
+            }
+        }
+    }
 
     processPhotos = function(photoData,cb){
         console.log('processPhotos called');
@@ -173,7 +221,9 @@ var contentManager = (function(){
     continuePlease = function(){
         console.log('flickr Finished');
         getOneOffItems(function(){
-            workWithLoadedData();
+            workWithLoadedData(function(){
+                console.log('done working with data');
+            });
         });
     }
 
