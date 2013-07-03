@@ -49,10 +49,11 @@ var contentArrays = (function(){
 
 var contentConfig = (function(){
     return {
-        MaxItemsPerRow : 25,           // number, no quotes
-        putTumblrOnLine : 4,       // number, cannot be higher than numberOfRows, or null. randomizedTumblr must be false
+        MaxItemsPerRow : 25,        // number, no quotes
+        putTumblrOnLine : 4,        // number, cannot be higher than numberOfRows, or null. randomizedTumblr must be false
         maxTumblrVideos : 5,
-        maxTumblrImages : 25,   // tumblr's max is 20. they're dumb
+        maxTumblrImages : 25,       // tumblr's max is 20. they're dumb
+        iframeHeight : "330px"
     }
 })();
 
@@ -115,6 +116,8 @@ var contentManager = (function(){
 		  },
 	  });
 	}
+
+        // gets tumblr json
 	getTumblrVids = function(cb){
 		$.ajax({
 		    dataType: 'jsonp',
@@ -124,13 +127,14 @@ var contentManager = (function(){
 		     	console.log(data);
 		    	for (i=0;i<data.response.posts.length;i++){
 
-                    videoType = '';
 
+
+
+                        // determine if youtube or vimeo and get embed code
+                    videoType = '';
                     var source = data.response.posts[i].player[2].embed_code
                     var pat = /http(.)*(\?){1}/;
-
                     var match = pat.exec(source);
-
                     if (match){
                         match[0] = match[0].replace("?","");
                         console.log(match[0]);
@@ -143,48 +147,70 @@ var contentManager = (function(){
                         }
                         type = 'vimeo'
                     }
-                    console.log(type);
 
+                        // create containing div
+                    var div = "<div class='thumb-iframe-container'>"
+
+
+                        // create thumb-iframe div
+                    var div2 = document.createElement('div');
+                    div2.className = "thumb-iframe";
+
+                    div += "<div class='thumb-frame'>"
+
+
+
+                        // create iframe
+                    // var domFrame = document.createElement('iframe');
+                    // domFrame.src = match[0];
+                    // if (type == 'youtube'){
+                    //     domFrame.src += "?modestbranding=1&fs=0";
+                    // }
+                    // domFrame.style.width = data.response.posts[i].player[2].width+"px";
+                    // domFrame.style.height = "330px";//contentArrays.heightOfImages;
+
+
+
+                       // create thumbnail image                    
+                    // var img = document.createElement('img');
+                    // img.src = data.response.posts[i].thumbnail_url;
+                    // img.style.height = "330px";
+                    // img.dataset.playerUrl = match[0];
+
+                    div += "<img src='"+data.response.posts[i].thumbnail_url+"' ";
+                    div += "style='height:"+contentConfig.iframeHeight+";' />";
+
+
+                    div += "</div>"
                     
-                    var domFrame = document.createElement('iframe');
+                        // create play/stop icon
+                    // var icon = document.createElement('img');
+                    // icon.src = "Play_Icon.png";
+                    // icon.className = "play";
+                    // icon.dataset.playerUrl = match[0];
+                    // icon.dataset.playerWidth = data.response.posts[i].player[2].width+"px";
+                    // icon.dataset.playerThumb = data.response.posts[i].thumbnail_url;
 
-                    domFrame.src = match[0];
-
-                    if (type == 'youtube'){
-                        domFrame.src += "?modestbranding=1&fs=0";
-                    }
-
-                    domFrame.style.width = data.response.posts[i].player[2].width+"px";
-                    domFrame.style.height = "330px";//contentArrays.heightOfImages;
-
-                    console.log(domFrame.outerHTML);
-
-                    var div = document.createElement('div');
-
-                    var img = document.createElement('img');
-                    img.src = data.response.posts[i].thumbnail_url;
-                    img.style.height = "330px";
-                    img.dataset.playerUrl = match[0];
-
-                    div.innerHTML = img.outerHTML;
-
-                    var icon = document.createElement('img');
-                    icon.src = "Play_Icon.png";
-                    icon.className = "play";
-                    icon.dataset.playerUrl = match[0];
-                    icon.dataset.playerWidth = data.response.posts[i].player[2].width+"px";
-                    //icon.setAttribute("onclick","alert('clicked')");
+                    div += "<img src='Play_Icon.png' ";
+                    div += "class='play' ";
+                    div += "data-player-url='"+match[0]+"' ";
+                    div += "data-player-width='"+data.response.posts[i].player[2].width+"px' "
+                    div += "data-player-thumb='"+data.response.posts[i].thumbnail_url+"' />"
                     
 
-                    div.innerHTML += icon.outerHTML;
+                    div += "</div>"
+                    
+                        // add thumbnail and icon to containing div 
+                    // div2.innerHTML = img.outerHTML;
+                    // div2.innerHTML += icon.outerHTML;
 
-		    		contentArrays.tumblrVideos.push(div.outerHTML);
+                        // add containing element to array -- this step is kinda useless
+		    		contentArrays.tumblrVideos.push(div);
 
-	    			//var target = document.body
 
-	    			//target.innerHTML += newHTML;
+                        // call callback when done
 	    			if (i == data.response.posts.length-1){
-                        
+                        console.log(contentArrays)
 	    				cb();
 	    				return
 	    			}
@@ -215,14 +241,36 @@ var contentManager = (function(){
         }
     }
     tapEvents = function(me){
-        var domFrame = document.createElement('iframe');
-        domFrame.src = me.target.dataset.playerUrl;
-        domFrame.style.width = $(me.target.parentNode.firstChild).width()+"px";
-        domFrame.style.height = "330px";
+
+        if ($(me.target).hasClass("play-left")){
+            // remove iframe, add thumbnail
+
+                // create thumbnail image                    
+            var img = document.createElement('img');
+            img.src = me.target.dataset.playerThumb;
+            img.style.height = contentConfig.iframeHeight;
+            me.target.parentNode.firstChild.innerHTML = img.outerHTML;
+
+            $(me.target).removeClass("play-left")
+        } else {
+            // remove thumbnail, add iframe
+
+            var domFrame = document.createElement('iframe');
+            domFrame.src = me.target.dataset.playerUrl;
+            domFrame.style.width = $(me.target.parentNode.firstChild).width()+"px";
+            domFrame.style.height = contentConfig.iframeHeight;
+            me.target.parentNode.firstChild.innerHTML = domFrame.outerHTML;
+
+            $(me.target).addClass("play-left");
+        }
+
+            
+
 
         console.log($(me.target.parentNode.firstChild).width())
 
-        me.target.parentNode.innerHTML = domFrame.outerHTML;
+            // replace everything in the div with iframe
+        
     }
     getOneOffItems = function(cb){
         for (var i = 0; i < contentArrays.oneOffResources.length; i++) {
@@ -254,9 +302,6 @@ var contentManager = (function(){
         initiateScroll();
  	}
 
-    plotRows = function(){
-
-    }
 
     returnLineOfCertainItems = function (arrayOfThisType,type) {
 
