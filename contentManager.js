@@ -37,10 +37,11 @@ var contentArrays = (function(){
             // (thhat is, you cant put them in a row if that row doesn't exist)
             
         rows : [
+        {type: "tumblr"},
             {type: "flickr", setid: "72157633155822683" , title: "Set 1", blurb: "This is project A"},
             {type: "flickr", setid: "72157632430836699" , title: "Set 2", blurb: "This is project B"},
-            {type: "flickr", setid: "72157632210453982" , title: "Set 3", blurb: "This is project C"},
-            {type: "tumblr"}
+            {type: "flickr", setid: "72157632210453982" , title: "Set 3", blurb: "This is project C"}
+            
             //,{type: "extra"}
         ]
 	}
@@ -158,21 +159,32 @@ var contentManager = (function(){
 
                     console.log(domFrame.outerHTML);
 
-                    // var iframe = "<iframe height='";
-                    // iframe += contentArrays.heightOfImages;
-                    // iframe += "' src='";
-                    // iframe += data.response.posts[i].permalink_url;
-                    // if (type == 'youtube'){
-                    //     iframe += "fs=0";
-                    // }
-                    // iframe += "''></iframe>"
+                    var div = document.createElement('div');
 
-		    		contentArrays.tumblrVideos.push(domFrame.outerHTML);
+                    var img = document.createElement('img');
+                    img.src = data.response.posts[i].thumbnail_url;
+                    img.style.height = "330px";
+                    img.dataset.playerUrl = match[0];
+
+                    div.innerHTML = img.outerHTML;
+
+                    var icon = document.createElement('img');
+                    icon.src = "Play_Icon.png";
+                    icon.className = "play";
+                    icon.dataset.playerUrl = match[0];
+                    icon.dataset.playerWidth = data.response.posts[i].player[2].width+"px";
+                    //icon.setAttribute("onclick","alert('clicked')");
+                    
+
+                    div.innerHTML += icon.outerHTML;
+
+		    		contentArrays.tumblrVideos.push(div.outerHTML);
 
 	    			//var target = document.body
 
 	    			//target.innerHTML += newHTML;
 	    			if (i == data.response.posts.length-1){
+                        
 	    				cb();
 	    				return
 	    			}
@@ -180,6 +192,38 @@ var contentManager = (function(){
 		  	},
 	  	});
 	}
+    loadTapEvents = function(){
+        console.log('loading plays')
+        var plays = document.querySelectorAll(".play");
+
+        for (i=0;i<plays.length;i++){
+            if(plays[i].addEventListener){
+                plays[i].addEventListener('touchstart',function(me){
+                    tapEvents(me);
+                });
+                plays[i].addEventListener('click',function(me){
+                    tapEvents(me);
+                });
+            } else {
+                plays[i].attachEvent('touchstart',function(me){
+                    tapEvents(me);
+                });
+                plays[i].addEventListener('click',function(me){
+                    tapEvents(me);
+                });
+            }
+        }
+    }
+    tapEvents = function(me){
+        var domFrame = document.createElement('iframe');
+        domFrame.src = me.target.dataset.playerUrl;
+        domFrame.style.width = $(me.target.parentNode.firstChild).width()+"px";
+        domFrame.style.height = "330px";
+
+        console.log($(me.target.parentNode.firstChild).width())
+
+        me.target.parentNode.innerHTML = domFrame.outerHTML;
+    }
     getOneOffItems = function(cb){
         for (var i = 0; i < contentArrays.oneOffResources.length; i++) {
             var items = contentArrays.oneOffResources;
@@ -303,6 +347,8 @@ var contentManager = (function(){
             hotSpotScrolling: false,
             mousewheelScrolling: false
         });
+
+        loadTapEvents();
     }
             
    
@@ -321,3 +367,5 @@ function jsonFlickrApi(data){
  	contentManager.flickrCallback(data);
     //console.log("jsonp came back");
 }
+
+
